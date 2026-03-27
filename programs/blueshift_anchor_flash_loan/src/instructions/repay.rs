@@ -1,5 +1,8 @@
 use crate::error::ProtocolError;
 use anchor_lang::prelude::*;
+use solana_instructions_sysvar::{
+    load_instruction_at_checked, ID as INSTRUCTIONS_SYSVAR_ID,
+};
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
@@ -35,6 +38,7 @@ pub struct Repay<'info> {
         )]
     pub protocol_ata: InterfaceAccount<'info, TokenAccount>,
 
+    /// CHECK: validated by address constraint against the instructions sysvar
     #[account(address = INSTRUCTIONS_SYSVAR_ID)]
     instructions: UncheckedAccount<'info>,
 

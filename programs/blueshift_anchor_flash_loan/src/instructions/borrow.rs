@@ -2,6 +2,9 @@ use crate::error::ProtocolError;
 use crate::instruction;
 use crate::ID;
 use anchor_lang::prelude::*;
+use solana_instructions_sysvar::{
+    load_current_index_checked, load_instruction_at_checked, ID as INSTRUCTIONS_SYSVAR_ID,
+};
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
@@ -37,6 +40,7 @@ pub struct Borrow<'info> {
         )]
     pub protocol_ata: InterfaceAccount<'info, TokenAccount>,
 
+    /// CHECK: validated by address constraint against the instructions sysvar
     #[account(address = INSTRUCTIONS_SYSVAR_ID)]
     instructions: UncheckedAccount<'info>,
 
@@ -56,9 +60,8 @@ pub fn handler(ctx: Context<Borrow>, borrow_amount: u64) -> Result<()> {
     let len = u16::from_le_bytes(instructions_sysvar[0..2].try_into().unwrap());
     if let Ok(repay_ix) = load_instruction_at_checked(len as usize - 1, &ixs) {
         require_keys_eq!(repay_ix.program_id, ID, ProtocolError::InvalidProgram);
-        require_eq!(
-            repay_ix.data[0..8],
-            (instruction::Repay::DISCRIMINATOR),
+        require!(
+            repay_ix.data[0..8].eq(instruction::Repay::DISCRIMINATOR),
             ProtocolError::InvalidIx
         );
         require_keys_eq!(
