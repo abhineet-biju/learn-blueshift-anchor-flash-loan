@@ -1,4 +1,6 @@
-use crate::error::*;
+use crate::error::ProtocolError;
+use crate::instruction;
+use crate::ID;
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{
